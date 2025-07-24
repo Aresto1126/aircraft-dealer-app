@@ -4881,3 +4881,124 @@ function createEmergencySampleData() {
     }
 }
 
+// バックアップファイルから復旧
+function restoreFromBackupFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const backupData = JSON.parse(e.target.result);
+                
+                // バックアップデータの検証
+                if (!backupData.customers || !backupData.aircraft || !backupData.sales) {
+                    showAlert('無効なバックアップファイルです。', 'danger');
+                    return;
+                }
+                
+                // データを復旧
+                customers = backupData.customers || [];
+                aircraft = backupData.aircraft || [];
+                sales = backupData.sales || [];
+                cashbox = backupData.cashbox || [];
+                salespeople = backupData.salespeople || [];
+                inventory = backupData.inventory || [];
+                salaryRecords = backupData.salaryRecords || [];
+                
+                // ローカルストレージに保存
+                saveData();
+                
+                // 表示を更新
+                updateStats();
+                renderDashboard();
+                renderCustomersTable();
+                renderAircraftTable();
+                renderSalesTable();
+                renderCashboxHistory();
+                updateCashboxStats();
+                renderSalespeopleTable();
+                renderInventoryTable();
+                updateInventoryStats();
+                
+                showAlert('バックアップから復旧が完了しました！', 'success');
+                console.log('復旧されたデータ:', {
+                    customers: customers.length,
+                    aircraft: aircraft.length,
+                    sales: sales.length,
+                    cashbox: cashbox.length,
+                    salespeople: salespeople.length,
+                    inventory: inventory.length,
+                    salaryRecords: salaryRecords.length
+                });
+                
+            } catch (error) {
+                console.error('バックアップ復旧エラー:', error);
+                showAlert('バックアップファイルの読み込みに失敗しました: ' + error.message, 'danger');
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+// 自動バックアップ作成
+function createAutoBackup() {
+    const backupData = {
+        customers: customers,
+        aircraft: aircraft,
+        sales: sales,
+        cashbox: cashbox,
+        salespeople: salespeople,
+        inventory: inventory,
+        salaryRecords: salaryRecords,
+        backupDate: getJapanISOString(),
+        backupType: 'auto'
+    };
+    
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `luxury-aircraft-backup-${getJapanDateString()}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    showInfoToast('自動バックアップが作成されました。');
+}
+
+// 手動バックアップ作成
+function createManualBackup() {
+    const backupData = {
+        customers: customers,
+        aircraft: aircraft,
+        sales: sales,
+        cashbox: cashbox,
+        salespeople: salespeople,
+        inventory: inventory,
+        salaryRecords: salaryRecords,
+        backupDate: getJapanISOString(),
+        backupType: 'manual'
+    };
+    
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `luxury-aircraft-manual-backup-${getJapanDateString()}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    showInfoToast('手動バックアップが作成されました。');
+}
+
