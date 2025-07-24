@@ -1181,20 +1181,22 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <h6><i class="fas fa-save"></i> バックアップ・復元</h6>
+                            <h6><i class="fas fa-exchange-alt"></i> ローカル・Firebase同期</h6>
                             <div class="mb-3">
-                                <button class="btn btn-success me-2" onclick="createBackup()">
-                                    <i class="fas fa-save"></i> バックアップ作成
+                                <button class="btn btn-outline-warning me-2" onclick="uploadLocalDataToFirebase()">
+                                    <i class="fas fa-arrow-up"></i> ローカル→Firebaseアップロード
                                 </button>
-                                <button class="btn btn-outline-success" onclick="restoreFromFile()">
-                                    <i class="fas fa-undo"></i> バックアップ復元
+                                <button class="btn btn-outline-info me-2" onclick="downloadFirebaseDataToLocal()">
+                                    <i class="fas fa-arrow-down"></i> Firebase→ローカルダウンロード
                                 </button>
                             </div>
-                            
-                            <h6><i class="fas fa-database"></i> サンプルデータ</h6>
+                            <h6><i class="fas fa-eraser"></i> データリセット</h6>
                             <div class="mb-3">
-                                <button class="btn btn-info" onclick="createSampleData()">
-                                    <i class="fas fa-database"></i> サンプルデータ作成
+                                <button class="btn btn-danger me-2" onclick="resetAllData()">
+                                    <i class="fas fa-trash"></i> ローカルデータリセット
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="resetFirebaseData()">
+                                    <i class="fas fa-trash-alt"></i> Firebaseデータリセット
                                 </button>
                             </div>
                         </div>

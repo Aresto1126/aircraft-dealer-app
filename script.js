@@ -99,8 +99,134 @@ function startDataSync() {
         console.error('Firebase同期エラー:', error);
         showAlert('Firebase同期エラー: ' + error.message, 'danger');
     });
+}
+
+// ローカルデータをFirebaseにアップロード
+async function uploadLocalDataToFirebase() {
+    if (!db || !isFirebaseConnected) {
+        showAlert('Firebaseに接続されていません', 'warning');
+        return false;
+    }
     
-    console.log('Firebase同期開始');
+    try {
+        // ローカルデータを取得
+        const localData = {
+            customers: JSON.parse(localStorage.getItem('customers') || '[]'),
+            aircraft: JSON.parse(localStorage.getItem('aircraft') || '[]'),
+            sales: JSON.parse(localStorage.getItem('sales') || '[]'),
+            cashbox: JSON.parse(localStorage.getItem('cashbox') || '[]'),
+            salespeople: JSON.parse(localStorage.getItem('salespeople') || '[]'),
+            inventory: JSON.parse(localStorage.getItem('inventory') || '[]'),
+            salaryRecords: JSON.parse(localStorage.getItem('salaryRecords') || '[]'),
+            lastModified: Date.now()
+        };
+        
+        // Firebaseにアップロード
+        await db.collection('aircraft-dealer').doc('data').set(localData);
+        
+        showAlert('ローカルデータをFirebaseにアップロードしました', 'success');
+        return true;
+    } catch (error) {
+        console.error('データアップロードエラー:', error);
+        showAlert('データアップロードエラー: ' + error.message, 'danger');
+        return false;
+    }
+}
+
+// Firebaseデータをローカルにダウンロード
+async function downloadFirebaseDataToLocal() {
+    if (!db || !isFirebaseConnected) {
+        showAlert('Firebaseに接続されていません', 'warning');
+        return false;
+    }
+    
+    try {
+        const doc = await db.collection('aircraft-dealer').doc('data').get();
+        
+        if (doc.exists) {
+            const firebaseData = doc.data();
+            
+            // ローカルストレージに保存
+            localStorage.setItem('customers', JSON.stringify(firebaseData.customers || []));
+            localStorage.setItem('aircraft', JSON.stringify(firebaseData.aircraft || []));
+            localStorage.setItem('sales', JSON.stringify(firebaseData.sales || []));
+            localStorage.setItem('cashbox', JSON.stringify(firebaseData.cashbox || []));
+            localStorage.setItem('salespeople', JSON.stringify(firebaseData.salespeople || []));
+            localStorage.setItem('inventory', JSON.stringify(firebaseData.inventory || []));
+            localStorage.setItem('salaryRecords', JSON.stringify(firebaseData.salaryRecords || []));
+            
+            // グローバル変数を更新
+            customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            aircraft = JSON.parse(localStorage.getItem('aircraft') || '[]');
+            sales = JSON.parse(localStorage.getItem('sales') || '[]');
+            cashbox = JSON.parse(localStorage.getItem('cashbox') || '[]');
+            salespeople = JSON.parse(localStorage.getItem('salespeople') || '[]');
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            salaryRecords = JSON.parse(localStorage.getItem('salaryRecords') || '[]');
+            
+            // 表示を更新
+            updateAllDisplays();
+            
+            showAlert('Firebaseデータをローカルにダウンロードしました', 'success');
+            return true;
+        } else {
+            showAlert('Firebaseにデータがありません', 'info');
+            return false;
+        }
+    } catch (error) {
+        console.error('データダウンロードエラー:', error);
+        showAlert('データダウンロードエラー: ' + error.message, 'danger');
+        return false;
+    }
+}
+
+// データリセット機能
+function resetAllData() {
+    if (confirm('本当にすべてのデータをリセットしますか？この操作は取り消せません。')) {
+        // ローカルストレージをクリア
+        localStorage.removeItem('customers');
+        localStorage.removeItem('aircraft');
+        localStorage.removeItem('sales');
+        localStorage.removeItem('cashbox');
+        localStorage.removeItem('salespeople');
+        localStorage.removeItem('inventory');
+        localStorage.removeItem('salaryRecords');
+        
+        // グローバル変数をリセット
+        customers = [];
+        aircraft = [];
+        sales = [];
+        cashbox = [];
+        salespeople = [];
+        inventory = [];
+        salaryRecords = [];
+        
+        // 表示を更新
+        updateAllDisplays();
+        
+        showAlert('すべてのデータをリセットしました', 'success');
+    }
+}
+
+// Firebaseデータリセット
+async function resetFirebaseData() {
+    if (!db || !isFirebaseConnected) {
+        showAlert('Firebaseに接続されていません', 'warning');
+        return false;
+    }
+    
+    if (confirm('Firebaseのすべてのデータをリセットしますか？この操作は取り消せません。')) {
+        try {
+            await db.collection('aircraft-dealer').doc('data').delete();
+            showAlert('Firebaseデータをリセットしました', 'success');
+            return true;
+        } catch (error) {
+            console.error('Firebaseデータリセットエラー:', error);
+            showAlert('Firebaseデータリセットエラー: ' + error.message, 'danger');
+            return false;
+        }
+    }
+    return false;
 }
 
 // データ同期停止
