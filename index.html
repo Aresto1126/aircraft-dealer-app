@@ -1160,14 +1160,6 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6><i class="fas fa-wifi"></i> Firebase同期</h6>
-                            <div class="mb-3">
-                                <button class="btn btn-warning me-2" onclick="testFirebaseConnection()">
-                                    <i class="fas fa-wifi"></i> 接続テスト
-                                </button>
-                                <span id="connectionStatus" class="badge bg-secondary ms-2">未接続</span>
-                            </div>
-                            
                             <h6><i class="fas fa-database"></i> データ管理</h6>
                             <div class="mb-3">
                                 <button class="btn btn-primary me-2" onclick="exportData()">
@@ -1178,61 +1170,13 @@
                                     <i class="fas fa-upload"></i> データインポート
                                 </button>
                             </div>
-                            <h6><i class="fas fa-save"></i> バックアップ・復元</h6>
-                            <div class="mb-3">
-                                <button class="btn btn-success me-2" onclick="createManualBackup()">
-                                    <i class="fas fa-save"></i> 手動バックアップ作成
-                                </button>
-                                <button class="btn btn-outline-success me-2" onclick="restoreFromBackupFile()">
-                                    <i class="fas fa-undo"></i> バックアップから復元
-                                </button>
-                                <button class="btn btn-info" onclick="createAutoBackup()">
-                                    <i class="fas fa-database"></i> 自動バックアップ作成
-                                </button>
-                            </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <h6><i class="fas fa-exchange-alt"></i> ローカル・Firebase同期</h6>
-                            <div class="mb-3">
-                                <button class="btn btn-outline-warning me-2" onclick="uploadLocalDataToFirebase()">
-                                    <i class="fas fa-arrow-up"></i> ローカル→Firebaseアップロード
-                                </button>
-                                <button class="btn btn-outline-info me-2" onclick="downloadFirebaseDataToLocal()">
-                                    <i class="fas fa-arrow-down"></i> Firebase→ローカルダウンロード
-                                </button>
-                            </div>
                             <h6><i class="fas fa-eraser"></i> データリセット</h6>
                             <div class="mb-3">
-                                <button class="btn btn-danger me-2" onclick="resetAllData()">
-                                    <i class="fas fa-trash"></i> ローカルデータリセット
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="resetFirebaseData()">
-                                    <i class="fas fa-trash-alt"></i> Firebaseデータリセット
-                                </button>
-                            </div>
-                            <h6><i class="fas fa-undo"></i> データ復旧</h6>
-                            <div class="mb-3">
-                                <button class="btn btn-warning me-2" onclick="attemptDataRecovery()">
-                                    <i class="fas fa-undo"></i> ローカルデータ復旧
-                                </button>
-                                <button class="btn btn-outline-warning me-2" onclick="recoverFromFirebase()">
-                                    <i class="fas fa-cloud-download-alt"></i> Firebaseから復旧
-                                </button>
-                                <button class="btn btn-info" onclick="createEmergencySampleData()">
-                                    <i class="fas fa-plus"></i> 緊急サンプルデータ作成
-                                </button>
-                            </div>
-                            <h6><i class="fas fa-history"></i> Ver.1.0復旧</h6>
-                            <div class="mb-3">
-                                <button class="btn btn-secondary me-2" onclick="restoreToVersion10()">
-                                    <i class="fas fa-history"></i> Ver.1.0に戻す
-                                </button>
-                                <button class="btn btn-outline-secondary me-2" onclick="createVersion10SampleData()">
-                                    <i class="fas fa-database"></i> Ver.1.0サンプルデータ
-                                </button>
-                                <button class="btn btn-outline-danger" onclick="disableFirebaseSync()">
-                                    <i class="fas fa-ban"></i> Firebase同期無効化
+                                <button class="btn btn-danger" onclick="resetAllData()">
+                                    <i class="fas fa-trash"></i> データリセット
                                 </button>
                             </div>
                         </div>
@@ -1274,8 +1218,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
 </body>
 </html> 
