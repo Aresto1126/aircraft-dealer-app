@@ -2711,6 +2711,10 @@ function exportData() {
         customers: customers,
         aircraft: aircraft,
         sales: sales,
+        cashbox: cashbox,
+        salespeople: salespeople,
+        inventory: inventory,
+        salaryRecords: salaryRecords,
         exportDate: getJapanISOString()
     };
     
@@ -2788,9 +2792,23 @@ function importData(event) {
                 aircraft = data.aircraft;
                 sales = data.sales;
                 
+                // 追加データのインポート（存在する場合）
+                if (data.cashbox) cashbox = data.cashbox;
+                if (data.salespeople) salespeople = data.salespeople;
+                if (data.inventory) inventory = data.inventory;
+                if (data.salaryRecords) salaryRecords = data.salaryRecords;
+                
                 saveData();
                 updateStats();
                 renderDashboard();
+                renderCustomersTable();
+                renderAircraftTable();
+                renderSalesTable();
+                renderCashboxHistory();
+                updateCashboxStats();
+                renderSalespeopleTable();
+                renderInventoryTable();
+                updateInventoryStats();
                 showInfoToast('データがインポートされました。');
             } else {
                 showErrorToast('無効なデータファイルです。');
