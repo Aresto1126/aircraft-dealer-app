@@ -10,13 +10,13 @@ function initializeFirebase() {
     try {
         // Firebase設定
         const firebaseConfig = {
-            apiKey: "AIzaSyAnW8bsEOJg7LJgKuEWIW9c0VnxPewvt5c",
-            authDomain: "luxury-aircraft-dealer.firebaseapp.com",
-            projectId: "luxury-aircraft-dealer",
-            storageBucket: "luxury-aircraft-dealer.firebasestorage.app",
-            messagingSenderId: "377853944102",
-            appId: "1:377853944102:web:99500f3990c32493df21e7",
-            measurementId: "G-T3SEYHV6S4"
+            apiKey: "AIzaSyDMoR5QCOwzNKOhM_zCSzY5nQWP5gMTNAE",
+            authDomain: "aircraft-dealer-v2.firebaseapp.com",
+            projectId: "aircraft-dealer-v2",
+            storageBucket: "aircraft-dealer-v2.firebasestorage.app",
+            messagingSenderId: "160115753362",
+            appId: "1:160115753362:web:8f9eb46a680b811a7b414b",
+            measurementId: "G-JJJ20PFLR8"
         };
         
         // Firebase初期化

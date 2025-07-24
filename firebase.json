@@ -4,17 +4,7 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**",
-      "VERSION_1.0_BACKUP/**",
-      "backup_*/**",
-      "*.md",
-      "img/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
+      "**/node_modules/**"
     ]
   }
-} 
+}
