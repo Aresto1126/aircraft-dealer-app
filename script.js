@@ -699,50 +699,46 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初期表示はダッシュボード
     showSection('dashboard');
+    
+    // データ読み込みと初期化
+    loadData();
+    populateAircraftSelect();
+    updateCustomerSelect();
+    updateSalespersonSelect();
+    populateInventoryAircraftSelect();
 });
 
 // データの読み込み
 function loadData() {
-    const savedCustomers = localStorage.getItem('luxury-aircraft-customers');
-    const savedAircraft = localStorage.getItem('luxury-aircraft-aircraft');
-    const savedSales = localStorage.getItem('luxury-aircraft-sales');
-    const savedSalespeople = localStorage.getItem('luxury-aircraft-salespeople');
-    const savedInventory = localStorage.getItem('luxury-aircraft-inventory');
-    const savedCashbox = localStorage.getItem('luxury-aircraft-cashbox');
-    const savedSalaryRecords = localStorage.getItem('luxury-aircraft-salary-records');
+    customers = JSON.parse(localStorage.getItem('customers') || '[]');
+    aircraft = JSON.parse(localStorage.getItem('aircraft') || '[]');
+    sales = JSON.parse(localStorage.getItem('sales') || '[]');
+    cashbox = JSON.parse(localStorage.getItem('cashbox') || '[]');
+    salespeople = JSON.parse(localStorage.getItem('salespeople') || '[]');
+    inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+    salaryRecords = JSON.parse(localStorage.getItem('salaryRecords') || '[]');
     
-    if (savedCustomers) {
-        customers = JSON.parse(savedCustomers);
-    }
-    if (savedAircraft) {
-        aircraft = JSON.parse(savedAircraft);
-    }
-    if (savedSales) {
-        sales = JSON.parse(savedSales);
-    }
-    if (savedSalespeople) {
-        salespeople = JSON.parse(savedSalespeople);
-    }
-    if (savedInventory) {
-        inventory = JSON.parse(savedInventory);
-    }
-    if (savedCashbox) {
-        cashbox = JSON.parse(savedCashbox);
-    }
-    if (savedSalaryRecords) {
-        salaryRecords = JSON.parse(savedSalaryRecords);
-    }
+    updateStats();
+    renderDashboard();
+    renderCustomersTable();
+    renderAircraftTable();
+    renderSalesTable();
+    renderCashboxHistory();
+    updateCashboxStats();
+    renderSalespeopleTable();
+    renderInventoryTable();
+    updateInventoryStats();
 }
 
 // データの保存
 function saveData() {
-    localStorage.setItem('luxury-aircraft-customers', JSON.stringify(customers));
-    localStorage.setItem('luxury-aircraft-aircraft', JSON.stringify(aircraft));
-    localStorage.setItem('luxury-aircraft-sales', JSON.stringify(sales));
-    localStorage.setItem('luxury-aircraft-salespeople', JSON.stringify(salespeople));
-    localStorage.setItem('luxury-aircraft-inventory', JSON.stringify(inventory));
-    localStorage.setItem('luxury-aircraft-cashbox', JSON.stringify(cashbox));
-    localStorage.setItem('luxury-aircraft-salary-records', JSON.stringify(salaryRecords));
+    localStorage.setItem('customers', JSON.stringify(customers));
+    localStorage.setItem('aircraft', JSON.stringify(aircraft));
+    localStorage.setItem('sales', JSON.stringify(sales));
+    localStorage.setItem('cashbox', JSON.stringify(cashbox));
+    localStorage.setItem('salespeople', JSON.stringify(salespeople));
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+    localStorage.setItem('salaryRecords', JSON.stringify(salaryRecords));
 }
 
 // 金庫への入金処理（利益・損失の自動記録）
