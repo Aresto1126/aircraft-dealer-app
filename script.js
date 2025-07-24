@@ -5002,3 +5002,104 @@ function createManualBackup() {
     showInfoToast('手動バックアップが作成されました。');
 }
 
+// Ver.1.0の状態に戻す
+function restoreToVersion10() {
+    if (confirm('Ver.1.0の状態に戻しますか？Firebase同期機能が無効化され、シンプルなローカルストレージベースの状態になります。')) {
+        // Firebase同期を停止
+        stopDataSync();
+        isFirebaseConnected = false;
+        updateConnectionStatus('未接続');
+        
+        // グローバル変数をVer.1.0の状態にリセット
+        customers = [];
+        aircraft = [];
+        sales = [];
+        cashbox = [];
+        salespeople = [];
+        inventory = [];
+        salaryRecords = [];
+        
+        // ローカルストレージをクリア
+        localStorage.removeItem('customers');
+        localStorage.removeItem('aircraft');
+        localStorage.removeItem('sales');
+        localStorage.removeItem('cashbox');
+        localStorage.removeItem('salespeople');
+        localStorage.removeItem('inventory');
+        localStorage.removeItem('salaryRecords');
+        
+        // 表示を更新
+        updateStats();
+        renderDashboard();
+        renderCustomersTable();
+        renderAircraftTable();
+        renderSalesTable();
+        renderCashboxHistory();
+        updateCashboxStats();
+        renderSalespeopleTable();
+        renderInventoryTable();
+        updateInventoryStats();
+        
+        showAlert('Ver.1.0の状態に戻しました。Firebase同期機能が無効化されています。', 'success');
+    }
+}
+
+// Ver.1.0のサンプルデータを作成
+function createVersion10SampleData() {
+    if (confirm('Ver.1.0のサンプルデータを作成しますか？')) {
+        // Ver.1.0の基本的なサンプルデータ
+        customers = [
+            { id: 1, name: "テスト顧客1", createdAt: getJapanDateString() },
+            { id: 2, name: "テスト顧客2", createdAt: getJapanDateString() }
+        ];
+        
+        aircraft = [
+            { id: 1, name: "テスト航空機1", price: 1000000, customerId: 1, purchaseDate: getJapanDateString() },
+            { id: 2, name: "テスト航空機2", price: 2000000, customerId: 2, purchaseDate: getJapanDateString() }
+        ];
+        
+        sales = [
+            { id: 1, customerName: "テスト顧客1", aircraftName: "テスト航空機1", quantity: 1, totalPrice: 1000000, saleDate: getJapanDateString() }
+        ];
+        
+        cashbox = [
+            { id: 1, amount: 1000000, description: "初期資金", date: getJapanDateString() }
+        ];
+        
+        salespeople = [
+            { id: 1, name: "テスト販売員1", hireDate: getJapanDateString(), isActive: true }
+        ];
+        
+        inventory = [
+            { id: 1, aircraftName: "テスト航空機1", quantity: 5, freeStock: 3 }
+        ];
+        
+        salaryRecords = [];
+        
+        // ローカルストレージに保存
+        saveData();
+        
+        // 表示を更新
+        updateStats();
+        renderDashboard();
+        renderCustomersTable();
+        renderAircraftTable();
+        renderSalesTable();
+        renderCashboxHistory();
+        updateCashboxStats();
+        renderSalespeopleTable();
+        renderInventoryTable();
+        updateInventoryStats();
+        
+        showAlert('Ver.1.0のサンプルデータを作成しました！', 'success');
+    }
+}
+
+// Firebase同期を無効化
+function disableFirebaseSync() {
+    stopDataSync();
+    isFirebaseConnected = false;
+    updateConnectionStatus('無効化');
+    showAlert('Firebase同期を無効化しました。Ver.1.0モードで動作します。', 'info');
+}
+
