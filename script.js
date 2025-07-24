@@ -4718,3 +4718,166 @@ function showSalespersonDetail(salespersonId) {
     modal.show();
 }
 
+// データ復旧機能
+function attemptDataRecovery() {
+    console.log('データ復旧を試行中...');
+    
+    // ローカルストレージからデータを再読み込み
+    const recoveredCustomers = JSON.parse(localStorage.getItem('customers') || '[]');
+    const recoveredAircraft = JSON.parse(localStorage.getItem('aircraft') || '[]');
+    const recoveredSales = JSON.parse(localStorage.getItem('sales') || '[]');
+    const recoveredCashbox = JSON.parse(localStorage.getItem('cashbox') || '[]');
+    const recoveredSalespeople = JSON.parse(localStorage.getItem('salespeople') || '[]');
+    const recoveredInventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+    const recoveredSalaryRecords = JSON.parse(localStorage.getItem('salaryRecords') || '[]');
+    
+    // データが存在するかチェック
+    const hasData = recoveredCustomers.length > 0 || 
+                   recoveredAircraft.length > 0 || 
+                   recoveredSales.length > 0 ||
+                   recoveredCashbox.length > 0 ||
+                   recoveredSalespeople.length > 0 ||
+                   recoveredInventory.length > 0 ||
+                   recoveredSalaryRecords.length > 0;
+    
+    if (hasData) {
+        // グローバル変数を復旧
+        customers = recoveredCustomers;
+        aircraft = recoveredAircraft;
+        sales = recoveredSales;
+        cashbox = recoveredCashbox;
+        salespeople = recoveredSalespeople;
+        inventory = recoveredInventory;
+        salaryRecords = recoveredSalaryRecords;
+        
+        // 表示を更新
+        updateStats();
+        renderDashboard();
+        renderCustomersTable();
+        renderAircraftTable();
+        renderSalesTable();
+        renderCashboxHistory();
+        updateCashboxStats();
+        renderSalespeopleTable();
+        renderInventoryTable();
+        updateInventoryStats();
+        
+        showAlert('データ復旧が完了しました！', 'success');
+        console.log('復旧されたデータ:', {
+            customers: customers.length,
+            aircraft: aircraft.length,
+            sales: sales.length,
+            cashbox: cashbox.length,
+            salespeople: salespeople.length,
+            inventory: inventory.length,
+            salaryRecords: salaryRecords.length
+        });
+    } else {
+        showAlert('復旧可能なデータが見つかりませんでした。', 'warning');
+    }
+}
+
+// Firebaseからデータを復旧
+async function recoverFromFirebase() {
+    if (!db || !isFirebaseConnected) {
+        showAlert('Firebaseに接続されていません。先に接続テストを実行してください。', 'warning');
+        return;
+    }
+    
+    try {
+        const doc = await db.collection('aircraft-dealer').doc('data').get();
+        
+        if (doc.exists) {
+            const firebaseData = doc.data();
+            
+            // ローカルストレージに保存
+            localStorage.setItem('customers', JSON.stringify(firebaseData.customers || []));
+            localStorage.setItem('aircraft', JSON.stringify(firebaseData.aircraft || []));
+            localStorage.setItem('sales', JSON.stringify(firebaseData.sales || []));
+            localStorage.setItem('cashbox', JSON.stringify(firebaseData.cashbox || []));
+            localStorage.setItem('salespeople', JSON.stringify(firebaseData.salespeople || []));
+            localStorage.setItem('inventory', JSON.stringify(firebaseData.inventory || []));
+            localStorage.setItem('salaryRecords', JSON.stringify(firebaseData.salaryRecords || []));
+            
+            // グローバル変数を更新
+            customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            aircraft = JSON.parse(localStorage.getItem('aircraft') || '[]');
+            sales = JSON.parse(localStorage.getItem('sales') || '[]');
+            cashbox = JSON.parse(localStorage.getItem('cashbox') || '[]');
+            salespeople = JSON.parse(localStorage.getItem('salespeople') || '[]');
+            inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            salaryRecords = JSON.parse(localStorage.getItem('salaryRecords') || '[]');
+            
+            // 表示を更新
+            updateStats();
+            renderDashboard();
+            renderCustomersTable();
+            renderAircraftTable();
+            renderSalesTable();
+            renderCashboxHistory();
+            updateCashboxStats();
+            renderSalespeopleTable();
+            renderInventoryTable();
+            updateInventoryStats();
+            
+            showAlert('Firebaseからデータを復旧しました！', 'success');
+        } else {
+            showAlert('Firebaseにデータがありません。', 'info');
+        }
+    } catch (error) {
+        console.error('Firebase復旧エラー:', error);
+        showAlert('Firebaseからの復旧に失敗しました: ' + error.message, 'danger');
+    }
+}
+
+// サンプルデータを作成（緊急時用）
+function createEmergencySampleData() {
+    if (confirm('緊急用のサンプルデータを作成しますか？')) {
+        // 基本的なサンプルデータを作成
+        customers = [
+            { id: 1, name: "サンプル顧客1", createdAt: getJapanDateString() },
+            { id: 2, name: "サンプル顧客2", createdAt: getJapanDateString() }
+        ];
+        
+        aircraft = [
+            { id: 1, name: "サンプル航空機1", price: 1000000, customerId: 1, purchaseDate: getJapanDateString() },
+            { id: 2, name: "サンプル航空機2", price: 2000000, customerId: 2, purchaseDate: getJapanDateString() }
+        ];
+        
+        sales = [
+            { id: 1, customerName: "サンプル顧客1", aircraftName: "サンプル航空機1", quantity: 1, totalPrice: 1000000, saleDate: getJapanDateString() }
+        ];
+        
+        cashbox = [
+            { id: 1, amount: 1000000, description: "初期資金", date: getJapanDateString() }
+        ];
+        
+        salespeople = [
+            { id: 1, name: "サンプル販売員1", hireDate: getJapanDateString(), isActive: true }
+        ];
+        
+        inventory = [
+            { id: 1, aircraftName: "サンプル航空機1", quantity: 5, freeStock: 3 }
+        ];
+        
+        salaryRecords = [];
+        
+        // ローカルストレージに保存
+        saveData();
+        
+        // 表示を更新
+        updateStats();
+        renderDashboard();
+        renderCustomersTable();
+        renderAircraftTable();
+        renderSalesTable();
+        renderCashboxHistory();
+        updateCashboxStats();
+        renderSalespeopleTable();
+        renderInventoryTable();
+        updateInventoryStats();
+        
+        showAlert('緊急用サンプルデータを作成しました！', 'success');
+    }
+}
+

@@ -1199,6 +1199,18 @@
                                     <i class="fas fa-trash-alt"></i> Firebaseデータリセット
                                 </button>
                             </div>
+                            <h6><i class="fas fa-undo"></i> データ復旧</h6>
+                            <div class="mb-3">
+                                <button class="btn btn-warning me-2" onclick="attemptDataRecovery()">
+                                    <i class="fas fa-undo"></i> ローカルデータ復旧
+                                </button>
+                                <button class="btn btn-outline-warning me-2" onclick="recoverFromFirebase()">
+                                    <i class="fas fa-cloud-download-alt"></i> Firebaseから復旧
+                                </button>
+                                <button class="btn btn-info" onclick="createEmergencySampleData()">
+                                    <i class="fas fa-plus"></i> 緊急サンプルデータ作成
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
