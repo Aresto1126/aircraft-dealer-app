@@ -6362,20 +6362,33 @@ async function createDataGist() {
             })
         });
 
-        const gist = await response.json();
-        
-        if (gist.id) {
-            gistId = gist.id;
-            githubToken = token;
+        if (response.ok) {
+            const gist = await response.json();
             
-            localStorage.setItem('luxuryAircraftGistId', gistId);
-            localStorage.setItem('luxuryAircraftGithubToken', githubToken);
-            
-            alert(`Gist同期が設定されました！\nGist ID: ${gistId}\n他のメンバーとこのIDを共有してください`);
-            startGistSync();
-            updateSyncStatus();
+            if (gist.id) {
+                gistId = gist.id;
+                githubToken = token;
+                
+                localStorage.setItem('luxuryAircraftGistId', gistId);
+                localStorage.setItem('luxuryAircraftGithubToken', githubToken);
+                
+                alert(`Gist同期が設定されました！\nGist ID: ${gistId}\n他のメンバーとこのIDを共有してください`);
+                startGistSync();
+                updateSyncStatus();
+            } else {
+                alert('Gist作成に失敗しました: IDが取得できませんでした');
+            }
         } else {
-            alert('Gist作成に失敗しました');
+            const errorData = await response.json();
+            console.error('Gist作成エラー:', response.status, response.statusText, errorData);
+            
+            if (response.status === 401) {
+                alert('Gist作成に失敗しました: Personal Access Tokenが無効です。\n正しいトークンを入力してください。');
+            } else if (response.status === 403) {
+                alert('Gist作成に失敗しました: アクセス権限がありません。\nPersonal Access Tokenに「gist」権限があることを確認してください。');
+            } else {
+                alert(`Gist作成に失敗しました: ${response.status} ${response.statusText}\n${errorData.message || ''}`);
+            }
         }
     } catch (error) {
         console.error('Gist作成エラー:', error);
@@ -6398,25 +6411,40 @@ async function joinGistSync() {
             }
         });
         
-        const gist = await response.json();
-        
-        if (gist.files && gist.files['luxury-aircraft-data.json']) {
-            const remoteData = JSON.parse(gist.files['luxury-aircraft-data.json'].content);
+        if (response.ok) {
+            const gist = await response.json();
             
-            // データをマージ
-            mergeSharedData(remoteData);
-            
-            gistId = gistIdInput;
-            githubToken = token;
-            
-            localStorage.setItem('luxuryAircraftGistId', gistId);
-            localStorage.setItem('luxuryAircraftGithubToken', githubToken);
-            
-            alert('Gist同期に参加しました！');
-            startGistSync();
-            updateSyncStatus();
+            if (gist.files && gist.files['luxury-aircraft-data.json']) {
+                const remoteData = JSON.parse(gist.files['luxury-aircraft-data.json'].content);
+                
+                // データをマージ
+                mergeSharedData(remoteData);
+                
+                gistId = gistIdInput;
+                githubToken = token;
+                
+                localStorage.setItem('luxuryAircraftGistId', gistId);
+                localStorage.setItem('luxuryAircraftGithubToken', githubToken);
+                
+                alert('Gist同期に参加しました！');
+                startGistSync();
+                updateSyncStatus();
+            } else {
+                alert('Gistデータが見つかりません: luxury-aircraft-data.jsonファイルがありません');
+            }
         } else {
-            alert('Gistデータが見つかりません');
+            const errorData = await response.json();
+            console.error('Gist取得エラー:', response.status, response.statusText, errorData);
+            
+            if (response.status === 401) {
+                alert('Gist同期への参加に失敗しました: Personal Access Tokenが無効です。');
+            } else if (response.status === 403) {
+                alert('Gist同期への参加に失敗しました: アクセス権限がありません。');
+            } else if (response.status === 404) {
+                alert('Gist同期への参加に失敗しました: 指定されたGistが見つかりません。\nGist IDを確認してください。');
+            } else {
+                alert(`Gist同期への参加に失敗しました: ${response.status} ${response.statusText}`);
+            }
         }
     } catch (error) {
         console.error('Gist参加エラー:', error);
@@ -6428,10 +6456,10 @@ async function joinGistSync() {
 async function startGistSync() {
     if (!gistId || !githubToken) return;
 
-    // 30秒ごとに同期
+    // 5分ごとに同期（レート制限対応）
     setInterval(async () => {
         await syncWithGist();
-    }, 30000);
+    }, 5 * 60 * 1000);
 
     // 初回同期
     await syncWithGist();
@@ -6449,16 +6477,25 @@ async function syncWithGist() {
             }
         });
         
-        const gist = await response.json();
-        
-        if (gist.files && gist.files['luxury-aircraft-data.json']) {
-            const remoteData = JSON.parse(gist.files['luxury-aircraft-data.json'].content);
+        if (response.ok) {
+            const gist = await response.json();
             
-            // データをマージ
-            mergeSharedData(remoteData);
-            
-            // ローカルデータをアップロード
-            await uploadToGist();
+            if (gist.files && gist.files['luxury-aircraft-data.json']) {
+                const remoteData = JSON.parse(gist.files['luxury-aircraft-data.json'].content);
+                
+                // データをマージ
+                mergeSharedData(remoteData);
+                
+                // ローカルデータをアップロード
+                await uploadToGist();
+            }
+        } else if (response.status === 403) {
+            const errorData = await response.json();
+            if (errorData.message && errorData.message.includes('rate limit exceeded')) {
+                console.log('APIレート制限のため同期をスキップします');
+                showErrorToast('GitHub API レート制限に達しました。同期頻度が自動的に調整されます。');
+                return; // 同期をスキップ
+            }
         }
     } catch (error) {
         console.error('Gist同期エラー:', error);
@@ -6470,7 +6507,7 @@ async function uploadToGist() {
     if (!gistId || !githubToken) return;
 
     try {
-        await fetch(`https://api.github.com/gists/${gistId}`, {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
             method: 'PATCH',
             headers: {
                 'Authorization': `token ${githubToken}`,
@@ -6493,8 +6530,36 @@ async function uploadToGist() {
                 }
             })
         });
+        
+        if (response.ok) {
+            console.log('データをGistにアップロードしました');
+            updateConnectionStatus('online');
+        } else {
+            const errorText = await response.text();
+            console.error('Gistアップロードエラー:', response.status, response.statusText, errorText);
+            
+            if (response.status === 403) {
+                // レート制限かアクセス権限エラーかを判別
+                if (errorText.includes('rate limit exceeded')) {
+                    showErrorToast('GitHub Gist同期エラー: APIレート制限に達しました。しばらく待ってから再試行してください。');
+                    console.log('レート制限のため5分間同期を停止します');
+                } else {
+                    showErrorToast('GitHub Gist同期エラー: アクセス権限がありません。Personal Access Tokenを確認してください。');
+                }
+            } else if (response.status === 404) {
+                showErrorToast('GitHub Gist同期エラー: Gistが見つかりません。Gist IDを確認してください。');
+            } else if (response.status === 401) {
+                showErrorToast('GitHub Gist同期エラー: トークンが無効です。新しいPersonal Access Tokenを作成してください。');
+            } else {
+                showErrorToast(`GitHub Gist同期エラー: ${response.status} ${response.statusText}`);
+            }
+            
+            updateConnectionStatus('offline');
+        }
     } catch (error) {
         console.error('Gistアップロードエラー:', error);
+        showErrorToast('GitHub Gist同期エラー: ネットワーク接続を確認してください。');
+        updateConnectionStatus('offline');
     }
 }
 
@@ -6563,6 +6628,28 @@ function mergeArrays(localArray, remoteArray, idField) {
     return merged;
 }
 
+// 手動同期
+async function manualSync() {
+    if (!gistId || !githubToken) {
+        showErrorToast('同期が設定されていません。まず「新規同期作成」または「同期に参加」を行ってください。');
+        return;
+    }
+    
+    try {
+        showInfoToast('手動同期を開始しています...');
+        updateConnectionStatus('connecting');
+        
+        await syncWithGist();
+        
+        showInfoToast('手動同期が完了しました。');
+        updateConnectionStatus('online');
+    } catch (error) {
+        console.error('手動同期エラー:', error);
+        showErrorToast('手動同期に失敗しました。');
+        updateConnectionStatus('offline');
+    }
+}
+
 // Gist同期を無効化
 function disconnectGistSync() {
     localStorage.removeItem('luxuryAircraftGistId');
@@ -6571,6 +6658,7 @@ function disconnectGistSync() {
     githubToken = null;
     alert('Gist同期を無効化しました');
     updateSyncStatus();
+    updateConnectionStatus('offline');
 }
 
 // リアルタイム保存機能の設定

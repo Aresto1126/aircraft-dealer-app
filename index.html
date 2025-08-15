@@ -341,12 +341,12 @@
                             <div class="sync-info">
                                 <h6><i class="fas fa-info-circle"></i> データ同期について</h6>
                                 <p class="mb-2">GitHub Gistを使用してチーム全体でデータを自動同期できます。</p>
-                                <ul class="mb-0 small">
-                                    <li>30秒ごとに自動同期</li>
-                                    <li>複数人同時作業対応</li>
-                                    <li>データの競合を自動解決</li>
-                                    <li>完全無料で利用可能</li>
-                                </ul>
+                                                                        <ul class="mb-0 small">
+                                            <li>5分ごとに自動同期（APIレート制限対応）</li>
+                                            <li>複数人同時作業対応</li>
+                                            <li>データの競合を自動解決</li>
+                                            <li>完全無料で利用可能</li>
+                                        </ul>
                             </div>
                             
                             <div class="sync-controls">
@@ -355,6 +355,9 @@
                                 </button>
                                 <button class="btn btn-primary" onclick="joinGistSync()">
                                     <i class="fas fa-link"></i> 同期に参加
+                                </button>
+                                <button class="btn btn-info" onclick="manualSync()">
+                                    <i class="fas fa-sync"></i> 手動同期
                                 </button>
                                 <button class="btn btn-warning" onclick="disconnectGistSync()">
                                     <i class="fas fa-unlink"></i> 同期解除
