@@ -26,6 +26,12 @@ let githubToken = null;
 // リアルタイム保存用
 let saveTimeout = null;
 
+// 同期最適化用の変数
+let lastSyncHash = null;
+let pendingChanges = false;
+let lastSyncTime = 0;
+let syncInterval = null;
+
 // グローバル変数
 let customers = [];
 let aircraft = [];
@@ -787,6 +793,11 @@ function saveData() {
     localStorage.setItem('luxury-aircraft-inventory', JSON.stringify(inventory));
     localStorage.setItem('luxury-aircraft-cashbox', JSON.stringify(cashbox));
     localStorage.setItem('luxury-aircraft-salary-records', JSON.stringify(salaryRecords));
+    
+    // データ変更フラグを設定（同期用）
+    if (typeof markDataChanged === 'function') {
+        markDataChanged();
+    }
 }
 
 // 金庫への入金処理（利益・損失の自動記録）
@@ -6452,17 +6463,47 @@ async function joinGistSync() {
     }
 }
 
-// Gist同期開始
+// Gist同期開始（インテリジェント同期）
 async function startGistSync() {
     if (!gistId || !githubToken) return;
 
-    // 5分ごとに同期（レート制限対応）
-    setInterval(async () => {
-        await syncWithGist();
-    }, 5 * 60 * 1000);
+    // 初回ハッシュを計算
+    lastSyncHash = calculateDataHash();
+    
+    // インテリジェント同期（変更がある場合のみ）
+    syncInterval = setInterval(async () => {
+        await intelligentSync();
+    }, 2 * 60 * 1000); // 2分ごとにチェック
 
     // 初回同期
     await syncWithGist();
+}
+
+// インテリジェント同期（変更検出付き）
+async function intelligentSync() {
+    if (!gistId || !githubToken) return;
+    
+    const now = Date.now();
+    const timeSinceLastSync = now - lastSyncTime;
+    
+    // 最低30秒は間隔を空ける（レート制限対策）
+    if (timeSinceLastSync < 30000) {
+        console.log('同期間隔が短すぎるためスキップ');
+        return;
+    }
+    
+    // データに変更がある場合、または5分以上同期していない場合のみ同期
+    const hasChanges = hasDataChanged();
+    const shouldSync = hasChanges || pendingChanges || (timeSinceLastSync > 5 * 60 * 1000);
+    
+    if (shouldSync) {
+        console.log('同期実行:', { hasChanges, pendingChanges, timeSinceLastSync });
+        await syncWithGist();
+        pendingChanges = false;
+        lastSyncTime = now;
+    } else {
+        console.log('変更なし - 同期スキップ');
+    }
 }
 
 // Gistとの同期
@@ -6483,11 +6524,23 @@ async function syncWithGist() {
             if (gist.files && gist.files['luxury-aircraft-data.json']) {
                 const remoteData = JSON.parse(gist.files['luxury-aircraft-data.json'].content);
                 
-                // データをマージ
-                mergeSharedData(remoteData);
+                // リモートデータの更新時刻をチェック
+                const remoteUpdateTime = remoteData.lastUpdate ? new Date(remoteData.lastUpdate).getTime() : 0;
+                const localUpdateTime = lastSyncTime;
                 
-                // ローカルデータをアップロード
-                await uploadToGist();
+                // リモートデータが新しい場合のみマージ
+                if (remoteUpdateTime > localUpdateTime) {
+                    console.log('リモートデータが新しいためマージします');
+                    mergeSharedData(remoteData);
+                }
+                
+                // ローカルに変更がある場合のみアップロード
+                if (hasDataChanged() || pendingChanges) {
+                    console.log('ローカル変更があるためアップロードします');
+                    await uploadToGist();
+                } else {
+                    console.log('変更なし - アップロードスキップ');
+                }
             }
         } else if (response.status === 403) {
             const errorData = await response.json();
@@ -6534,6 +6587,13 @@ async function uploadToGist() {
         if (response.ok) {
             console.log('データをGistにアップロードしました');
             updateConnectionStatus('online');
+            
+            // 同期完了後にハッシュを更新
+            lastSyncHash = calculateDataHash();
+            lastSyncTime = Date.now();
+            
+            // レート制限情報を更新
+            updateRateLimitInfo(response.headers);
         } else {
             const errorText = await response.text();
             console.error('Gistアップロードエラー:', response.status, response.statusText, errorText);
@@ -6626,6 +6686,44 @@ function mergeArrays(localArray, remoteArray, idField) {
     });
     
     return merged;
+}
+
+// データのハッシュ計算（変更検出用）
+function calculateDataHash() {
+    const dataString = JSON.stringify({
+        customers: customers.filter(c => c._deleted !== true),
+        aircraft: aircraft.filter(a => a._deleted !== true),
+        sales: sales.filter(s => s._deleted !== true),
+        salespeople: salespeople.filter(sp => sp._deleted !== true),
+        inventory: inventory.filter(i => i._deleted !== true),
+        cashbox: cashbox,
+        salaryRecords: salaryRecords.filter(sr => sr._deleted !== true)
+    });
+    
+    // 簡単なハッシュ計算
+    let hash = 0;
+    for (let i = 0; i < dataString.length; i++) {
+        const char = dataString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 32bit整数に変換
+    }
+    return hash.toString();
+}
+
+// データ変更の検出
+function hasDataChanged() {
+    const currentHash = calculateDataHash();
+    const changed = lastSyncHash !== currentHash;
+    if (changed) {
+        console.log('データ変更を検出:', { lastSyncHash, currentHash });
+    }
+    return changed;
+}
+
+// 変更フラグの設定
+function markDataChanged() {
+    pendingChanges = true;
+    console.log('データ変更フラグを設定');
 }
 
 // 手動同期
@@ -6729,6 +6827,42 @@ function cleanupDeletedRecords() {
     if (sales.length < originalLength) {
         console.log(`削除されたレコードをクリーンアップしました: ${originalLength - sales.length}件`);
         saveData();
+    }
+}
+
+// レート制限情報の更新
+function updateRateLimitInfo(headers) {
+    const rateLimitInfo = document.getElementById('rate-limit-info');
+    const rateRemaining = document.getElementById('rate-remaining');
+    const rateReset = document.getElementById('rate-reset');
+    const rateProgress = document.getElementById('rate-progress');
+    
+    if (!rateLimitInfo || !headers) return;
+    
+    const remaining = headers.get('x-ratelimit-remaining');
+    const limit = headers.get('x-ratelimit-limit');
+    const reset = headers.get('x-ratelimit-reset');
+    
+    if (remaining && limit) {
+        rateLimitInfo.style.display = 'block';
+        rateRemaining.textContent = `${remaining}/${limit}`;
+        
+        const percentage = (remaining / limit) * 100;
+        rateProgress.style.width = `${percentage}%`;
+        
+        // 残り少ない場合は警告色に
+        if (percentage < 20) {
+            rateProgress.className = 'progress-bar bg-danger';
+        } else if (percentage < 50) {
+            rateProgress.className = 'progress-bar bg-warning';
+        } else {
+            rateProgress.className = 'progress-bar bg-success';
+        }
+        
+        if (reset) {
+            const resetTime = new Date(parseInt(reset) * 1000);
+            rateReset.textContent = resetTime.toLocaleTimeString();
+        }
     }
 }
 

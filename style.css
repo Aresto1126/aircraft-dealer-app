@@ -645,4 +645,30 @@
     border-color: #80bdff;
     box-shadow: 0 0 5px rgba(128, 189, 255, 0.3);
     outline: none;
+}
+
+/* レート制限情報のスタイル */
+.rate-limit-info {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    font-size: 12px;
+}
+
+.rate-limit-info h6 {
+    margin-bottom: 10px;
+    color: #495057;
+    font-size: 13px;
+}
+
+.rate-limit-info .progress {
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.rate-limit-info small {
+    color: #6c757d;
+    font-weight: 500;
 } 

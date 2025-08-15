@@ -332,20 +332,36 @@
                             <h5 class="mb-0"><i class="fas fa-sync-alt"></i> データ同期機能</h5>
                         </div>
                         <div class="card-body">
-                            <div id="sync-status">
-                                <div class="sync-status inactive">
-                                    <i class="fas fa-exclamation-circle"></i> GitHub Gist同期: 無効
-                                </div>
+                                                <div id="sync-status">
+                        <div class="sync-status inactive">
+                            <i class="fas fa-exclamation-circle"></i> GitHub Gist同期: 無効
+                        </div>
+                    </div>
+                    
+                    <div id="rate-limit-info" class="rate-limit-info" style="display: none;">
+                        <h6><i class="fas fa-tachometer-alt"></i> APIレート制限情報</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small>残りリクエスト: <span id="rate-remaining">-</span></small>
                             </div>
+                            <div class="col-md-6">
+                                <small>リセット時刻: <span id="rate-reset">-</span></small>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div id="rate-progress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
                             
                             <div class="sync-info">
                                 <h6><i class="fas fa-info-circle"></i> データ同期について</h6>
                                 <p class="mb-2">GitHub Gistを使用してチーム全体でデータを自動同期できます。</p>
                                                                         <ul class="mb-0 small">
-                                            <li>5分ごとに自動同期（APIレート制限対応）</li>
+                                            <li>インテリジェント同期（変更時のみ実行）</li>
+                                            <li>2分ごとにチェック、最大5分間隔で同期</li>
                                             <li>複数人同時作業対応</li>
                                             <li>データの競合を自動解決</li>
-                                            <li>完全無料で利用可能</li>
+                                            <li>APIレート制限の自動管理</li>
                                         </ul>
                             </div>
                             
