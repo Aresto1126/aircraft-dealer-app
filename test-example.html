@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金庫管理機能テスト - LUXURY-AIRCRAFT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success-result {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error-result {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info-result {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3><i class="fas fa-safe"></i> 金庫管理機能テスト</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle"></i> テスト内容</h5>
+                            <p>このページは金庫管理機能の動作確認用です。以下のテストケースを実行してください：</p>
+                            <ul>
+                                <li><strong>利益販売テスト</strong>: 通常の販売で利益が金庫に入金される</li>
+                                <li><strong>赤字販売テスト</strong>: 大幅割引販売で損失が金庫から差し引かれる</li>
+                                <li><strong>複数台販売テスト</strong>: 複数台購入時の利益計算と金庫への反映</li>
+                                <li><strong>手動出金テスト</strong>: イベント等での手動出金機能</li>
+                                <li><strong>残高調整テスト</strong>: 実地確認後の残高修正機能</li>
+                                <li><strong>削除時の金庫調整テスト</strong>: 販売記録削除時の金庫残高自動調整</li>
+                            </ul>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-calculator"></i> テストケース1: 利益販売</h4>
+                            <p><strong>例</strong>: スパロー（定価¥2500万円）を定価で販売</p>
+                            <ul>
+                                <li>販売価格: ¥2500万円</li>
+                                <li>仕入れ価格: ¥1250万円（定価の50%）</li>
+                                <li>販売員給与: ¥750万円（販売価格の30%）</li>
+                                <li>ディーラー利益: ¥500万円</li>
+                            </ul>
+                            <div class="test-result success-result">
+                                <strong>期待結果</strong>: 金庫に¥500万円が入金され、履歴に「販売による利益: スパロー」として記録される
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-exclamation-triangle"></i> テストケース2: 赤字販売</h4>
+                            <p><strong>例</strong>: ハンター（定価¥5400万円）を30%OFFで販売</p>
+                            <ul>
+                                <li>販売価格: ¥3780万円（30%OFF）</li>
+                                <li>仕入れ価格: ¥2700万円（定価の50%）</li>
+                                <li>販売員給与: ¥1134万円（販売価格の30%）</li>
+                                <li>ディーラー損失: -¥54万円</li>
+                            </ul>
+                            <div class="test-result error-result">
+                                <strong>期待結果</strong>: 金庫から¥54万円が差し引かれ、履歴に「販売による損失: ハンター」として記録される
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-layer-group"></i> テストケース3: 複数台販売</h4>
+                            <p><strong>例</strong>: スパロー（定価¥2500万円）を3台、1台分30%OFFで販売</p>
+                            <ul>
+                                <li>1台目（30%OFF）: ¥1750万円</li>
+                                <li>2台目（定価）: ¥2500万円</li>
+                                <li>3台目（定価）: ¥2500万円</li>
+                                <li>総販売価格: ¥6750万円</li>
+                                <li>総仕入れ価格: ¥3750万円</li>
+                                <li>販売員給与: ¥2025万円</li>
+                                <li>ディーラー利益: ¥975万円</li>
+                            </ul>
+                            <div class="test-result success-result">
+                                <strong>期待結果</strong>: 金庫に¥975万円が入金され、履歴に「販売による利益: スパロー 3台」として記録される
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-hand-holding-usd"></i> テストケース4: 手動出金</h4>
+                            <p><strong>例</strong>: レースイベントの景品代として¥500万円を出金</p>
+                            <div class="test-result info-result">
+                                <strong>期待結果</strong>: 金庫から¥500万円が差し引かれ、履歴に「レースイベント景品代」として記録される
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-balance-scale"></i> テストケース5: 残高調整</h4>
+                            <p><strong>例</strong>: 実地確認で残高を¥1000万円から¥1200万円に調整</p>
+                            <div class="test-result info-result">
+                                <strong>期待結果</strong>: 金庫残高が¥1200万円に調整され、履歴に「実地確認による修正 (残高調整: ¥1000万円 → ¥1200万円)」として記録される
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-trash"></i> テストケース6: 削除時の金庫調整</h4>
+                            <p><strong>例</strong>: 上記のスパロー3台販売記録（利益¥975万円）を削除</p>
+                            <ul>
+                                <li>販売履歴から該当記録を削除</li>
+                                <li>関連する3台の航空機データを削除</li>
+                                <li>金庫残高から¥975万円を差し引き</li>
+                                <li>金庫履歴に「販売記録削除による利益取り消し: スパロー 3台」として記録</li>
+                            </ul>
+                            <div class="test-result error-result">
+                                <strong>期待結果</strong>: 販売記録、航空機データが削除され、金庫から¥975万円が差し引かれる。赤字販売の場合は逆に金庫に戻される。
+                            </div>
+                        </div>
+
+                        <div class="test-section">
+                            <h4><i class="fas fa-user-minus"></i> テストケース7: 顧客削除時の一括調整</h4>
+                            <p><strong>例</strong>: 複数回購入した顧客「田中太郎」を削除</p>
+                            <ul>
+                                <li>該当顧客のすべての販売記録を削除</li>
+                                <li>該当顧客の所有航空機をすべて削除</li>
+                                <li>該当顧客に関連する利益・損失をまとめて金庫から調整</li>
+                                <li>調整額を詳細メッセージで表示</li>
+                            </ul>
+                            <div class="test-result error-result">
+                                <strong>期待結果</strong>: 顧客に関連するすべてのデータが削除され、金庫残高も一括で調整される
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mt-4">
+                            <h5><i class="fas fa-lightbulb"></i> 重要なポイント</h5>
+                            <ul>
+                                <li><strong>自動処理</strong>: 販売完了と同時に利益・損失が自動で金庫に反映される</li>
+                                <li><strong>赤字対応</strong>: 赤字販売の場合は金庫残高から差し引かれる</li>
+                                <li><strong>削除時調整</strong>: 販売記録、顧客、航空機削除時に金庫残高も自動調整</li>
+                                <li><strong>履歴記録</strong>: すべての操作が詳細に記録され、後から確認可能</li>
+                                <li><strong>残高管理</strong>: 出金時の残高不足チェックで安全性を確保</li>
+                                <li><strong>透明性</strong>: 操作履歴により資金の流れが完全に把握可能</li>
+                                <li><strong>整合性保持</strong>: データ削除時も金庫残高の整合性を完全に維持</li>
+                            </ul>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <a href="index.html" class="btn btn-primary btn-lg">
+                                <i class="fas fa-arrow-left"></i> メインアプリに戻る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
