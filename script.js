@@ -1131,7 +1131,7 @@ function updateStats() {
     const totalAircraft = aircraft.length;
     
     // 削除されていない販売記録のみで統計を計算
-    const activeSales = sales.filter(sale => !sale._deleted);
+    const activeSales = sales.filter(sale => sale._deleted !== true);
     
     // 新しいデータ構造と旧データ構造の両方に対応
     const totalSales = activeSales.reduce((sum, sale) => {
@@ -1387,7 +1387,7 @@ function renderSalesTable() {
     const salesTable = document.getElementById('sales-table');
     
     // 削除されていない販売記録のみを表示
-    const activeSales = sales.filter(sale => !sale._deleted);
+    const activeSales = sales.filter(sale => sale._deleted !== true);
     
     if (activeSales.length === 0) {
         salesTable.innerHTML = `
@@ -1665,34 +1665,34 @@ function handleSaleSubmit(e) {
     } else {
         // 在庫優先販売の場合のみ在庫処理を実行
         console.log('在庫優先販売: 在庫処理を実行');
-        
-        // 該当する航空機の在庫を取得（優先順：無償在庫 → 安い順）
-        const availableInventory = inventory.filter(item => 
-            item.aircraftName === aircraftName && 
-            item.quantity > 0
-        ).sort((a, b) => a.purchasePrice - b.purchasePrice); // 安い順（無償在庫は0円なので最初に来る）
-        
-        if (availableInventory.length > 0) {
-            // 在庫から優先的に使用
-            for (const inventoryItem of availableInventory) {
-                if (remainingQuantity <= 0) break;
-                
-                const useFromThisStock = Math.min(inventoryItem.quantity, remainingQuantity);
-                fromInventory += useFromThisStock;
-                
-                // 在庫分のコスト（在庫の仕入れ価格）
-                totalCostPrice += inventoryItem.purchasePrice * useFromThisStock;
-                
-                // 在庫消費記録
-                inventoryUsed.push({
-                    inventoryId: inventoryItem.id,
-                    aircraftName: aircraftName,
-                    quantity: useFromThisStock,
-                    purchasePrice: inventoryItem.purchasePrice,
-                    isFreeStock: inventoryItem.isFreeStock || inventoryItem.purchasePrice === 0
-                });
-                
-                remainingQuantity -= useFromThisStock;
+    
+    // 該当する航空機の在庫を取得（優先順：無償在庫 → 安い順）
+    const availableInventory = inventory.filter(item => 
+        item.aircraftName === aircraftName && 
+        item.quantity > 0
+    ).sort((a, b) => a.purchasePrice - b.purchasePrice); // 安い順（無償在庫は0円なので最初に来る）
+    
+    if (availableInventory.length > 0) {
+        // 在庫から優先的に使用
+        for (const inventoryItem of availableInventory) {
+            if (remainingQuantity <= 0) break;
+            
+            const useFromThisStock = Math.min(inventoryItem.quantity, remainingQuantity);
+            fromInventory += useFromThisStock;
+            
+            // 在庫分のコスト（在庫の仕入れ価格）
+            totalCostPrice += inventoryItem.purchasePrice * useFromThisStock;
+            
+            // 在庫消費記録
+            inventoryUsed.push({
+                inventoryId: inventoryItem.id,
+                aircraftName: aircraftName,
+                quantity: useFromThisStock,
+                purchasePrice: inventoryItem.purchasePrice,
+                isFreeStock: inventoryItem.isFreeStock || inventoryItem.purchasePrice === 0
+            });
+            
+            remainingQuantity -= useFromThisStock;
             }
         }
     }
@@ -1784,10 +1784,10 @@ function handleSaleSubmit(e) {
         }
     } else if (selectedSaleMethod === 'inventory-priority') {
         // 在庫優先の場合（在庫で足りない分は新規仕入れ）
-        fromPurchase = remainingQuantity;
-        if (fromPurchase > 0) {
-            totalCostPrice += (originalPrice * 0.5) * fromPurchase; // 新規仕入れ分のコスト（定価の50%）
-        }
+    fromPurchase = remainingQuantity;
+    if (fromPurchase > 0) {
+        totalCostPrice += (originalPrice * 0.5) * fromPurchase; // 新規仕入れ分のコスト（定価の50%）
+    }
     }
     // 新規仕入れの場合は既に上で処理済みなので何もしない
     
@@ -2000,8 +2000,8 @@ function handleSaleSubmit(e) {
     }
     
     // 給与管理の統計と詳細を常に更新
-    updateSalaryStats();
-    renderSalaryDetails();
+        updateSalaryStats();
+        renderSalaryDetails();
     
     // 雇用管理が表示されている場合は更新
     if (document.getElementById('employment-section').classList.contains('active')) {
@@ -2058,7 +2058,7 @@ function updateCustomerSelect() {
             option.setAttribute('data-customer-reading', customer.reading);
             option.title = `${customer.name} - 読み: ${customer.reading}`;
         } else {
-            option.textContent = customer.name;
+        option.textContent = customer.name;
             option.setAttribute('data-customer-name', customer.name);
             option.title = customer.name;
         }
@@ -2995,7 +2995,7 @@ function handleAircraftChange(e) {
     }
     
     // 選択された航空機の情報を取得
-    const selectedOption = e.target.selectedOptions[0];
+        const selectedOption = e.target.selectedOptions[0];
     if (!selectedOption || !selectedOption.dataset.price) {
         clearPriceInfo();
         return;
@@ -3011,10 +3011,10 @@ function handleAircraftChange(e) {
     } else if (saleMethod === 'new-purchase') {
         // 新規仕入れ販売の場合（在庫を無視）
         handleNewPurchaseSale(aircraftName, originalPrice);
-    }
-    
-    // 割引計算を更新
-    updateDiscountCalculation();
+            }
+            
+            // 割引計算を更新
+            updateDiscountCalculation();
 }
 
 // 在庫優先販売の処理
@@ -3759,12 +3759,6 @@ function deleteSale(saleId) {
             sales[saleIndex].deletedAt = new Date().toISOString();
         }
         
-        // 実際の削除は同期後に行う
-        setTimeout(() => {
-            sales = sales.filter(s => s.id !== saleId);
-            saveData();
-        }, 2000);
-        
         // データ保存と表示更新
         saveData();
         
@@ -4272,7 +4266,7 @@ function renderSalespeopleTable() {
 // 販売員統計データの取得
 function getSalespersonStatistics(salespersonId) {
     // 削除されていない販売記録のみで統計を計算
-    const activeSales = sales.filter(sale => !sale._deleted);
+    const activeSales = sales.filter(sale => sale._deleted !== true);
     const salespersonSales = activeSales.filter(sale => 
         sale.salespersonId == salespersonId || 
         (sale.salespersonId && sale.salespersonId.toString() === salespersonId.toString())
@@ -6547,7 +6541,7 @@ function mergeArrays(localArray, remoteArray, idField) {
         const existingIndex = merged.findIndex(item => item[idField] === remoteItem[idField]);
         if (existingIndex === -1) {
             // 削除マーカーがある場合は追加しない
-            if (!remoteItem._deleted) {
+            if (remoteItem._deleted !== true) {
                 merged.push(remoteItem);
             }
         } else {
@@ -6556,7 +6550,7 @@ function mergeArrays(localArray, remoteArray, idField) {
             const remoteTimestamp = new Date(remoteItem.timestamp || remoteItem.registrationDate || remoteItem.saleDate || 0).getTime();
             
             if (remoteTimestamp > localTimestamp) {
-                if (remoteItem._deleted) {
+                if (remoteItem._deleted === true) {
                     // リモートで削除されている場合はローカルからも削除
                     merged.splice(existingIndex, 1);
                 } else {
@@ -6609,6 +6603,9 @@ function setupRealTimeSave() {
             });
         });
     });
+    
+    // 削除されたレコードの定期クリーンアップ（5分ごと）
+    setInterval(cleanupDeletedRecords, 5 * 60 * 1000);
 }
 
 // デバウンス付き保存（500ms後に実行）
@@ -6624,6 +6621,27 @@ function debouncedSave() {
             uploadToGist();
         }
     }, 500);
+}
+
+// 削除されたレコードのクリーンアップ
+function cleanupDeletedRecords() {
+    const now = new Date().getTime();
+    const cleanupThreshold = 2 * 60 * 1000; // 2分前
+    
+    // 2分以上前に削除されたレコードを物理削除
+    const originalLength = sales.length;
+    sales = sales.filter(sale => {
+        if (sale._deleted === true && sale.deletedAt) {
+            const deletedTime = new Date(sale.deletedAt).getTime();
+            return (now - deletedTime) < cleanupThreshold;
+        }
+        return true;
+    });
+    
+    if (sales.length < originalLength) {
+        console.log(`削除されたレコードをクリーンアップしました: ${originalLength - sales.length}件`);
+        saveData();
+    }
 }
 
 // 同期状態の更新
