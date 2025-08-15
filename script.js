@@ -1130,13 +1130,16 @@ function updateStats() {
     const totalCustomers = customers.length;
     const totalAircraft = aircraft.length;
     
+    // 削除されていない販売記録のみで統計を計算
+    const activeSales = sales.filter(sale => !sale._deleted);
+    
     // 新しいデータ構造と旧データ構造の両方に対応
-    const totalSales = sales.reduce((sum, sale) => {
+    const totalSales = activeSales.reduce((sum, sale) => {
         return sum + (sale.totalPrice || sale.price || 0);
     }, 0);
     
     // 利益計算（販売員給与30%を差し引いた実際のディーラー利益）
-    const totalProfit = sales.reduce((sum, sale) => {
+    const totalProfit = activeSales.reduce((sum, sale) => {
         if (sale.totalDealerProfit !== undefined) {
             // 新しいデータ構造（販売員給与考慮）
             return sum + sale.totalDealerProfit;
@@ -1383,7 +1386,10 @@ function renderCustomersTable() {
 function renderSalesTable() {
     const salesTable = document.getElementById('sales-table');
     
-    if (sales.length === 0) {
+    // 削除されていない販売記録のみを表示
+    const activeSales = sales.filter(sale => !sale._deleted);
+    
+    if (activeSales.length === 0) {
         salesTable.innerHTML = `
             <tr>
                 <td colspan="9" class="text-center empty-data">
@@ -1396,7 +1402,7 @@ function renderSalesTable() {
         return;
     }
     
-    const sortedSales = [...sales].sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate));
+    const sortedSales = [...activeSales].sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate));
     
     salesTable.innerHTML = sortedSales.map(sale => {
         // 新しいデータ構造と旧データ構造の両方に対応
@@ -3481,8 +3487,15 @@ function deleteCustomer(customerId) {
     
     // データ保存と表示更新
     saveData();
+    
+    // 共有機能が有効な場合は即座に同期
+    if (gistId && githubToken) {
+        uploadToGist();
+    }
+    
     updateStats();
     renderCustomersTable();
+    renderDashboard(); // ダッシュボードも更新
     populateAircraftFilterSelect(); // 航空機フィルター選択肢を更新
     renderCashboxHistory(); // 金庫履歴も更新
     
@@ -3739,13 +3752,30 @@ function deleteSale(saleId) {
         // 関連する給与記録を削除
         const unpaidSalaryRecords = deleteSalaryRecordsForSale(sale);
         
-        // 販売記録を削除
-        sales = sales.filter(s => s.id !== saleId);
+        // 販売記録を削除（削除マーカー付きで同期用に保持）
+        const saleIndex = sales.findIndex(s => s.id === saleId);
+        if (saleIndex !== -1) {
+            sales[saleIndex]._deleted = true;
+            sales[saleIndex].deletedAt = new Date().toISOString();
+        }
+        
+        // 実際の削除は同期後に行う
+        setTimeout(() => {
+            sales = sales.filter(s => s.id !== saleId);
+            saveData();
+        }, 2000);
         
         // データ保存と表示更新
         saveData();
+        
+        // 共有機能が有効な場合は即座に同期
+        if (gistId && githubToken) {
+            uploadToGist();
+        }
+        
         updateStats();
         renderSalesTable();
+        renderDashboard(); // ダッシュボードも更新
 
         renderCashboxHistory(); // 金庫履歴も更新
         populateAircraftFilterSelect(); // 航空機フィルター選択肢を更新
@@ -4241,7 +4271,9 @@ function renderSalespeopleTable() {
 
 // 販売員統計データの取得
 function getSalespersonStatistics(salespersonId) {
-    const salespersonSales = sales.filter(sale => 
+    // 削除されていない販売記録のみで統計を計算
+    const activeSales = sales.filter(sale => !sale._deleted);
+    const salespersonSales = activeSales.filter(sale => 
         sale.salespersonId == salespersonId || 
         (sale.salespersonId && sale.salespersonId.toString() === salespersonId.toString())
     );
@@ -5656,9 +5688,16 @@ function deleteInventoryItem(itemId) {
         inventory.splice(itemIndex, 1);
         
         saveData();
+        
+        // 共有機能が有効な場合は即座に同期
+        if (gistId && githubToken) {
+            uploadToGist();
+        }
+        
         renderInventoryTable();
         updateInventoryStats();
         updateStats();
+        renderDashboard(); // ダッシュボードも更新
         
         showInfoToast(`${item.aircraftName} ${item.quantity}台${stockTypeText}を在庫から削除しました。`);
     }
@@ -6507,14 +6546,22 @@ function mergeArrays(localArray, remoteArray, idField) {
     remoteArray.forEach(remoteItem => {
         const existingIndex = merged.findIndex(item => item[idField] === remoteItem[idField]);
         if (existingIndex === -1) {
-            merged.push(remoteItem);
+            // 削除マーカーがある場合は追加しない
+            if (!remoteItem._deleted) {
+                merged.push(remoteItem);
+            }
         } else {
             // より新しいタイムスタンプのデータを使用
-            const localTimestamp = merged[existingIndex].timestamp || merged[existingIndex].registrationDate || merged[existingIndex].saleDate || 0;
-            const remoteTimestamp = remoteItem.timestamp || remoteItem.registrationDate || remoteItem.saleDate || 0;
+            const localTimestamp = new Date(merged[existingIndex].timestamp || merged[existingIndex].registrationDate || merged[existingIndex].saleDate || 0).getTime();
+            const remoteTimestamp = new Date(remoteItem.timestamp || remoteItem.registrationDate || remoteItem.saleDate || 0).getTime();
             
             if (remoteTimestamp > localTimestamp) {
-                merged[existingIndex] = remoteItem;
+                if (remoteItem._deleted) {
+                    // リモートで削除されている場合はローカルからも削除
+                    merged.splice(existingIndex, 1);
+                } else {
+                    merged[existingIndex] = remoteItem;
+                }
             }
         }
     });
